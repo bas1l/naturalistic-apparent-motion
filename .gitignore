@@ -1,0 +1,4 @@
+# ignore all logs
+*.log
+# ignore ad5383 build directory
+AD5383_driver/build/*
