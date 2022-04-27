@@ -1,19 +1,27 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.18)
 
 project(ad5383_driver)
 
-set(CMAKE_CXX_FLAGS "-O2 -std=c++11")
+set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "-O2 -std=c++11 -pthread")
 
 message("${CMAKE_SYSTEM_NAME}")
 
-set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-set(SOURCES_DIR ${CMAKE_SOURCE_DIR}/src)
+
+find_package(Boost 1.74.0 COMPONENTS iostreams system)
+#find cppzmq wrapper, installed by make of cppzmq
+find_package(cppzmq)
+
 
 # A. Include directory
-include_directories(${INCLUDE_DIR})
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+set(SOURCES_DIR ${CMAKE_SOURCE_DIR}/src)
+include_directories(${INCLUDE_DIR} ${Boost_INCLUDE_DIR})
 
 # C. Developped libraries
 add_library(ad5383 ${SOURCES_DIR}/ad5383.cpp)
+target_link_libraries(ad5383 ${Boost_LIBRARIES})
 
 set(AD5383_LIB ${CMAKE_BINARY_DIR}/ad5383_driver.a)
 add_custom_target(combined
@@ -31,5 +39,7 @@ set_target_properties(ad5383_driver
 )
 
 # D. C executable files directories
-add_subdirectory("bin/ad5383_driver")
-add_subdirectory("bin/neutral")
+add_subdirectory("bin/actuators_driver_dir")
+add_subdirectory("bin/neutral_dir")
+add_subdirectory("bin/sandbox/zerozmq")
+add_subdirectory("bin/sandbox/zerozmq_receiver")

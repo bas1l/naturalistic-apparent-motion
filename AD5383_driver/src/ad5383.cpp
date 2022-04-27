@@ -1,13 +1,21 @@
-#include <stdio.h>
-#include <time.h>
-#include <iostream>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
+#include <algorithm>
 #include <bitset>
+#include <fcntl.h>
+#include <iostream>
+#include <unistd.h>
 #include <stdexcept>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/timerfd.h>
+#include <stdio.h>
+#include <time.h>
+
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
+
+#include <boost/asio.hpp>
+#include <boost/process.hpp>
+#include <iomanip>
 
 #include "ad5383.h"
 using namespace std;
@@ -209,10 +217,126 @@ int AD5383::execute_trajectory(const std::vector<std::vector<uint16_t> >& values
     return overruns;
 }
 
+void read_pipe()
+{
+   	int fifo_d;
+	boost::asio::io_service io_service;
+	std::vector<uint8_t> buffer(100);
+
+	fifo_d = open("/tmp/test", O_RDONLY | O_NONBLOCK);
+	boost::asio::posix::stream_descriptor fifo(io_service, fifo_d);
+	boost::asio::async_read(
+		fifo,
+		boost::asio::buffer(buffer),
+		[&](const boost::system::error_code &ec, std::size_t size)
+		{
+			for (auto x : buffer)
+			{
+				printf("%c", x);
+			}
+			std::cout << "Decoded data size: " << size << std::endl;
+		}
+	);
+	io_service.run();
+	close(fifo_d);
+}
+
+void read_file_line() {
+    FILE* fp = fopen("/tmp/test", "r+");
+    if (fp == NULL)
+        exit(EXIT_FAILURE);
+
+    char* line = NULL;
+    size_t len = 0;
+    while (1) {
+        while ((getline(&line, &len, fp)) != -1) {
+            // using printf() in all tests for consistency
+            printf("%s", line);
+
+        }
+    }
+    fclose(fp);
+    if (line)
+        free(line);
+}
+
+/*
+void read_pipe_line()
+{
+   	int fifo_d;
+	boost::asio::io_service io_service;
+	std::vector<uint8_t> buffer(100);
+
+	fifo_d = open("/tmp/test", O_RDONLY | O_NONBLOCK);
+	boost::asio::posix::stream_descriptor fifo(io_service, fifo_d);
+
+    std::function<void(boost::system::error_code, size_t)> handle = 
+        [&](boost::system::error_code ec, size_t /*bytes_transferred*) {
+            if (ec) {
+                std::cout << "Good bye (" << ec.message() << ")\n";
+            } 
+            else {
+                std::string line;
+                std::getline(std::istream(&data), line);
+                std::cout << "Got: " << std::quoted(line) << "\n";
+
+                async_read_until(output, data, "\n", handle);
+            }
+        }
+
+	boost::asio::async_read_until(fifo, boost::asio::buffer(buffer), "\n", handle);
+    
+	io_service.run();
+	close(fifo_d);
+}
+
+namespace bp = boost::process;
+using Args = std::vector<std::string>;
+// https://stackoverflow.com/questions/52025021/unexpected-end-of-file-while-reading-mpstat-output-with-boost-asio-async-read-un
+int read_pipe_process() {
+    boost::asio::io_service io;
+    bp::async_pipe output(io);
+    bp::child mpstat(bp::search_path("mpstat"),
+            //Args { "1", "-P", "ALL" },
+            Args { "1", "3" }, // limited to 3 iterations on Coliru
+            bp::std_out > output, io);
+
+    boost::asio::streambuf data;
+    std::function<void(boost::system::error_code, size_t)> handle = [&](boost::system::error_code ec, size_t /*bytes_transferred*) {
+        if (ec) {
+            std::cout << "Good bye (" << ec.message() << ")\n";
+        } 
+        else {
+            std::string line;
+            std::getline(std::istream(&data), line);
+            std::cout << "Got: " << std::quoted(line) << "\n";
+
+            async_read_until(output, data, "\n", handle);
+        }
+    };
+
+    async_read_until(output, data, "\n", handle);
+
+    io.run();
+}
+*/
+
+int AD5383::continuous_trajectory(std::vector<uint8_t> channels, long period_ns)
+{
+    if(*std::max_element(channels.begin(), channels.end()) > num_channels)
+        throw std::runtime_error("Trajectory vector is bigger than number of channels");
+    
+    bool keep_running;
+    int overruns = 0;
+    
+    read_file_line();
+
+    return overruns;
+}
 
 
 int AD5383::execute_selective_trajectory(std::multimap<uint8_t,std::vector<uint16_t>> wfLetter, long period_ns)
-{   
+{
     if(wfLetter.size() > num_channels)
         throw std::runtime_error("Trajectory vector is bigger than number of channels");
     

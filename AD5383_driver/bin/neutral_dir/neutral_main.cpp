@@ -36,8 +36,7 @@ int main(int argc, char *argv[])
     ad.configure();
     std::vector<std::vector<uint16_t> > values(AD5383::num_channels);
     
-    for(int j = 0; j < AD5383::num_channels; ++j)
-    {
+    for(int j = 0; j < AD5383::num_channels; ++j) {
         values[j].push_back(2048);
     }
     
