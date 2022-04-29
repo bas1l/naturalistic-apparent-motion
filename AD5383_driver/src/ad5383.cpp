@@ -53,37 +53,31 @@ void AD5383::set_channel_properties(uint8_t channel_id, uint16_t channel_neutral
 
 
 bool AD5383::spi_open(const char *port_name, uint8_t transfer_mode, uint8_t bit_justification, uint8_t bits_per_word, uint32_t max_speed) {
-    
-    if(!(_spi_fd = open(port_name, O_RDWR)))
-    {
+    if(!(_spi_fd = open(port_name, O_RDWR))) {
         perror("spi_open/open");
         _spi_fd = 0;
         return false;
     }
 
-    if(ioctl(_spi_fd, SPI_IOC_WR_MODE, &transfer_mode) != 0)
-    {
+    if(ioctl(_spi_fd, SPI_IOC_WR_MODE, &transfer_mode) != 0) {
         perror("spi_open/SPI_IOC_WR_MODE");
         _spi_fd = 0;
         return false;
     }
 
-    if(ioctl(_spi_fd, SPI_IOC_WR_LSB_FIRST, &bit_justification) != 0)
-    {
+    if(ioctl(_spi_fd, SPI_IOC_WR_LSB_FIRST, &bit_justification) != 0) {
         perror("spi_open/SPI_IOC_WR_LSB_FIRST");
         _spi_fd = 0;
         return false;
     }
 
-    if(ioctl(_spi_fd, SPI_IOC_WR_BITS_PER_WORD, &bits_per_word) != 0)
-    {
+    if(ioctl(_spi_fd, SPI_IOC_WR_BITS_PER_WORD, &bits_per_word) != 0) {
         perror("spi_open/SPI_IOC_WR_BITS_PER_WORD");
         _spi_fd = 0;
         return false;
     }
 
-    if(ioctl(_spi_fd, SPI_IOC_WR_MAX_SPEED_HZ, &max_speed) != 0)
-    {
+    if(ioctl(_spi_fd, SPI_IOC_WR_MAX_SPEED_HZ, &max_speed) != 0) {
         perror("spi_open/SPI_IOC_WR_MAX_SPEED_HZ");
         _spi_fd = 0;
         return false;
@@ -94,8 +88,7 @@ bool AD5383::spi_open(const char *port_name, uint8_t transfer_mode, uint8_t bit_
 
 
 bool AD5383::spi_close() {
-    if(_spi_fd && close(_spi_fd) != 0)
-	{
+    if(_spi_fd && close(_spi_fd) != 0) {
 		perror("spi_close/close");
 		return false;
 	}
@@ -349,12 +342,12 @@ int AD5383::execute_selective_trajectory(std::multimap<uint8_t,std::vector<uint1
     
     struct timespec ts = {
         .tv_sec = 0,
-                .tv_nsec = period_ns
+        .tv_nsec = period_ns
     };
 
     struct itimerspec its = {
         .it_interval = ts,
-                .it_value = ts
+        .it_value = ts
     };
     
     
@@ -445,6 +438,12 @@ uint8_t* AD5383::format_msg(bool reg_b, bool reg_read, uint8_t reg_channels, uin
     _in_buffer[2] = 0;
 
     return _out_buffer;
+}
+
+
+uint16_t AD5383::spi_xfer_public(bool reg_b, bool reg_read, uint8_t reg_channels, uint8_t reg_addr, uint16_t reg_data) {
+    format_msg(reg_b,reg_read,reg_channels,reg_addr,reg_data);
+    return spi_xfer();
 }
 
 

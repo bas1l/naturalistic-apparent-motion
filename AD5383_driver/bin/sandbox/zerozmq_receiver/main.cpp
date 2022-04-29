@@ -11,7 +11,7 @@ int main()
     //  Thread3 opens ALL envelopes
     subscriber.set(zmq::sockopt::subscribe, "");
 
-    std::string goodbye("Goodbye");
+    std::string stop_trigger("Goodbye");
 
     std::cout << "[CPP]: Listening..." << std::endl;
     while (1) {
@@ -23,7 +23,7 @@ int main()
 
         std::cout << "[CPP] Received: " << recv_msgs[0].to_string() << std::endl;
 
-        if (goodbye.compare(recv_msgs[0].to_string())  == 0)
+        if (stop_trigger.compare(recv_msgs[0].to_string())  == 0)
             break;
     }
 

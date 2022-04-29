@@ -109,6 +109,8 @@ public:
      */
     uint16_t read_channel(int channel);
 
+    uint16_t spi_xfer_public(bool reg_b, bool reg_read, uint8_t reg_channels, uint8_t reg_addr, uint16_t reg_data);
+
 private:
     uint8_t* format_msg(bool reg_b, bool reg_read, uint8_t reg_channels, uint8_t reg_addr, uint16_t reg_data);
     uint16_t spi_xfer(bool reg_b, bool reg_read, uint8_t reg_channels, uint8_t reg_addr, uint16_t reg_data);
