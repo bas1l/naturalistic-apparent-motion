@@ -1,0 +1,5 @@
+
+demo_thread_pipe.py
+Task:
+    - WHAT: Copy the accelerometer data into a text file
+    - WHERE: in process_acceleration(child_conn), just after sending the message to the other thread

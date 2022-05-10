@@ -42,7 +42,7 @@ def start_actuators_driver(ad5383_path):
 
 ''' Description:
 '''
-def process_acceleration(q, is_collecting, is_comm_ready):
+def read_acceleration(q, is_collecting, is_comm_ready):
     # Open the USB port to read accelerometer values from the Teensy
     ser=serial.Serial('/dev/ttyACM0', 9600)
     # initializing Delimiter
@@ -53,7 +53,7 @@ def process_acceleration(q, is_collecting, is_comm_ready):
     while (not is_comm_ready.value):
         continue
 
-    print ("[PY] process_acceleration : Start:")
+    print ("[PY] read_acceleration : Start:")
     cpt = 10000
     while cpt:
         readedByte = ser.readline()
@@ -81,7 +81,7 @@ def process_acceleration(q, is_collecting, is_comm_ready):
     ser.close()
     # Send working to False to trigger the end of the other thread
     is_collecting.value = False
-    print ("[PY] process_acceleration : done.")
+    print ("[PY] read_acceleration : done.")
     
 
 ''' Description:
@@ -110,6 +110,7 @@ def send_instruction_actuators(q, is_collecting, is_comm_ready, ad5383_path):
     #  Socket to talk to server
     socket = context.socket(zmq.PUB)
     socket.bind("tcp://*:5556")
+    
     
     p_act_driver = Process(target=start_actuators_driver, args=(ad5383_path,))
     p_act_driver.start()
@@ -158,12 +159,11 @@ if __name__ == '__main__':
         target=send_instruction_actuators, 
         args=(q, is_collecting,is_comm_ready, ad5383_path, ))
     p_processing = Process(
-        target=process_acceleration, 
+        target=read_acceleration, 
         args=(q, is_collecting,is_comm_ready, ))
     
     # start workers
     p_act.start()
-    time.sleep(2)
     p_processing.start()
     
     # wait for all workers to finish their jobs
