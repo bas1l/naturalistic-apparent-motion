@@ -1,0 +1,6 @@
+To be installed:
+    C++:
+        1. https://github.com/zeromq/libzmq (required for cppzmq)
+        2. https://github.com/zeromq/cppzmq
+    Python:
+        pip install pyzmq

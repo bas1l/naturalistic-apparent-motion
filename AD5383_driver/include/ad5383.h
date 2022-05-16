@@ -73,6 +73,14 @@ public:
     
     
     /**
+     * @brief open the communication with the ad5383 and send data as soon as it is received on the pipe
+     * @param channels Vector containing idChannel for each vectors of 'Values'
+     * @param period_ns Period between updates (ns)
+     * @return The number of overruns (missed timer ticks)
+     */
+    int continuous_trajectory(std::vector<uint8_t> channels, long period_ns);
+    
+    /**
      * @brief Starts a timer pushing values, related to the idChannels, to the dac output at a period given by period_ns (ns)
      * @param values Vector containing values for each channel, its size should be between 0 and num_channels. Each subvector contains output values (between 0 and 4095) for a channel at a given time
      * @param channels Vector containing idChannel for each vectors of 'Values'
@@ -100,6 +108,8 @@ public:
      * @return the voltage value of the channel
      */
     uint16_t read_channel(int channel);
+
+    uint16_t spi_xfer_public(bool reg_b, bool reg_read, uint8_t reg_channels, uint8_t reg_addr, uint16_t reg_data);
 
 private:
     uint8_t* format_msg(bool reg_b, bool reg_read, uint8_t reg_channels, uint8_t reg_addr, uint16_t reg_data);

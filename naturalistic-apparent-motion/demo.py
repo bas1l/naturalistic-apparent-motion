@@ -46,6 +46,7 @@ def process_acceleration(q, is_working):
     # initializing Z-values index
     idx = [3, 6, 9, 12, 15, 18]
 
+    print ("process_acceleration : Start:")
     cpt = 10
     while cpt:
         readedByte = ser.readline()
@@ -65,8 +66,10 @@ def process_acceleration(q, is_working):
         intList = list(map(int, textListShort))
         
         # time and z-values
-        q.put([int(textList[0]), intList])
+        #q.put([int(textList[0]), intList])
+        q.put([cpt, intList])
         cpt = cpt-1
+        time.sleep(0.5)
 
     # Close the USB port and pipe
     ser.close()
@@ -78,6 +81,10 @@ def process_acceleration(q, is_working):
 ''' Description:
 '''
 def send_instruction_actuators(q, is_working):
+    f = open("/tmp/test", "a")
+    instruction = ""
+
+    print ("send_instruction_actuators : Start:")
     while is_working.value:
         try:
             t, z_values = q.get(block=True, timeout=0.01) #seconds
@@ -86,7 +93,11 @@ def send_instruction_actuators(q, is_working):
             pass
         else:
             # Handle task here and call q.task_done()    
-            print ("Modified list is : " + str(z_values))
+            instruction = str(t)+","+",".join(str(x) for x in z_values)+"\n"
+            #print(instruction)
+            f.write(instruction)
+    
+    f.close()
     print ("send_instruction_actuators : done.")
 
 

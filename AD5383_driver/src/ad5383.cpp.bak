@@ -185,8 +185,7 @@ int AD5383::execute_trajectory(const std::vector<std::vector<uint16_t> >& values
     do
     {
         ret = read(_timer_fd, &missed, sizeof (missed));
-        if (ret == -1)
-        {
+        if (ret == -1) {
             perror("execute_trajectory/read");
             close(_timer_fd);
             return overruns;
@@ -194,10 +193,8 @@ int AD5383::execute_trajectory(const std::vector<std::vector<uint16_t> >& values
         overruns += missed - 1;
 
         keep_running = false;
-        for(unsigned int channel = 0; channel < values.size(); ++channel)
-        {
-            if(values[channel].size() > value_idx)
-            {
+        for(unsigned int channel = 0; channel < values.size(); ++channel) {
+            if(values[channel].size() > value_idx) {
                 keep_running = true;
                 spi_xfer(AD5383_REG_A,AD5383_WRITE,channel,AD5383_REG_DATA,values[channel][value_idx]);
             }
