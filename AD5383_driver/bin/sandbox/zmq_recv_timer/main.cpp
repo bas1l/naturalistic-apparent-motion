@@ -8,7 +8,7 @@
 #include "ad5383.h" // ad5383 header
 
 //int continuous_trajectory(std::vector<uint8_t> channels, long period_ns);
-bool data_message(zmq::socket_t * sub, std::vector<uint16_t> * data);
+bool data_message(zmq::socket_t * sub, long long * timing, std::vector<uint16_t> * data);
 bool data_configure(zmq::socket_t * sub, std::vector<uint8_t> * dacChannel, long* period_ns);
 void socket_only();
 int socket_and_timer();
@@ -39,8 +39,10 @@ void socket_only() {
 
     std::cout << "[CPP]: Listening..." << std::endl;
     while (1) {
-        std::vector<uint16_t> data(7);
-        if (data_message(&subscriber, &data) == 1)
+        std::vector<uint16_t> data(6);
+        long long timing=0;
+
+        if (data_message(&subscriber, &timing, &data) == 1)
             break;
             
         std::cout << "[CPP_recv] Received: " << std::flush;
@@ -59,7 +61,8 @@ int socket_and_timer() {
     zmq::context_t ctx(1);
     zmq::socket_t subscriber(ctx, zmq::socket_type::sub);
     
-    std::vector<uint16_t> data(7);
+    std::vector<uint16_t> data(6);
+    long long timing=0;
     unsigned long long missed = 0;
     long period_ms = 1;
     int _timer_fd;
@@ -109,7 +112,7 @@ int socket_and_timer() {
           overruns += missed - 1;
         
 
-        if (data_message(&subscriber, &data) == 1)
+        if (data_message(&subscriber, &timing, &data) == 1)
           keep_running = false;
         else if (!first)
           value_idx++;
@@ -138,7 +141,8 @@ int socket_and_timer_and_control() {
     zmq::socket_t subscriber(ctx, zmq::socket_type::sub);
     
 		std::vector<uint8_t>	dacChannel{18, 15, 14, 23, 19, 22};
-    std::vector<uint16_t> data(7);
+    std::vector<uint16_t> data(6);
+    long long timing = 0;
     unsigned long long missed = 0;
     long period_ms = 1;
     int _timer_fd;
@@ -190,7 +194,7 @@ int socket_and_timer_and_control() {
       else
         overruns += missed - 1;
       
-      if (data_message(&subscriber, &data) == 1) {
+      if (data_message(&subscriber, &timing, &data) == 1) {
         std::cout << "[CPP_recv] STOP " << std::endl;
         keep_running = false;
       }
@@ -202,7 +206,7 @@ int socket_and_timer_and_control() {
         }
         
         for(int c=0; c<dacChannel.size(); c++) {
-          ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[c],AD5383_REG_DATA,data[c+1]);
+          ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[c],AD5383_REG_DATA,data[c]);
         }
 
         if (!first) 
@@ -226,7 +230,8 @@ int socket_and_timer_and_control_and_config() {
   zmq::context_t ctx(1);
   zmq::socket_t subscriber(ctx, zmq::socket_type::sub);
 
-  std::vector<uint16_t> data(7, 2048);
+  std::vector<uint16_t> data(6, 2048);
+  long long timing = 0;
   std::vector<uint8_t>	dacChannel(6, 31);
   long period_ns = 0;
 
@@ -294,17 +299,24 @@ int socket_and_timer_and_control_and_config() {
     ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[4],AD5383_REG_DATA,data[5]);
     ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[5],AD5383_REG_DATA,data[6]);
 */
-    if (data_message(&subscriber, &data) == 1) {
+    if (data_message(&subscriber, &timing, &data) == 1) {
       keep_running = false;
     }
     else {
       //for(int c=0; c<dacChannel.size(); c++) {ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[c],AD5383_REG_DATA,data[c+1]);}
-      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[0],AD5383_REG_DATA,data[1]);
-      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[1],AD5383_REG_DATA,data[2]);
-      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[2],AD5383_REG_DATA,data[3]);
-      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[3],AD5383_REG_DATA,data[4]);
-      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[4],AD5383_REG_DATA,data[5]);
-      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[5],AD5383_REG_DATA,data[6]);
+      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[0],AD5383_REG_DATA,data[0]);
+      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[1],AD5383_REG_DATA,data[1]);
+      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[2],AD5383_REG_DATA,data[2]);
+      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[3],AD5383_REG_DATA,data[3]);
+      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[4],AD5383_REG_DATA,data[4]);
+      ad.spi_xfer_public(AD5383_REG_A,AD5383_WRITE,dacChannel[5],AD5383_REG_DATA,data[5]);
+      //std::cout << data[0] << ", " << std::flush;
+      //std::cout << data[1] << ", " << std::flush;
+      //std::cout << data[2] << ", " << std::flush;
+      //std::cout << data[3] << ", " << std::flush;
+      //std::cout << data[4] << ", " << std::flush;
+      //std::cout << data[5] << std::endl;
+      
       
       if (ignore_overruns)
         ignore_overruns--;
@@ -326,21 +338,37 @@ int socket_and_timer_and_control_and_config() {
 }
 
 
-void message_decode(std::string msg, std::vector<uint16_t> * data) {
+void message_decode(std::string msg, long long * timing, std::vector<uint16_t> * data) {
   static const std::string delimiter = ",";
   size_t start = 0; 
   size_t stopped = 0; 
   int pos = 0;
+  bool set_timing = true;
 
-  while ((stopped = msg.find(delimiter, start)) != std::string::npos) {
-    (*data)[pos++] = std::stoi(msg.substr(start, stopped-start));
-    start = stopped + 1; 
+  try {
+    while ((stopped = msg.find(delimiter, start)) != std::string::npos) {
+      if (set_timing) {
+        *timing = std::stoll(msg.substr(start, stopped-start));
+        set_timing = false;
+      }
+      else
+        (*data).at(pos++) = std::stoi(msg.substr(start, stopped-start));
+      start = stopped + 1; 
+    }
+    (*data).at(pos) = std::stoi(msg.substr(start));
   }
-  (*data)[pos] = std::stoi(msg.substr(start));
+  catch (const std::out_of_range& e) {
+      std::cout << "[CPP] Out of Range error: " << std::flush;
+      std::cout << "set_timing=<" << set_timing << ">\t" << std::flush;
+      std::cout << "pos=<" << pos << ">\t" << std::flush;
+      std::cout << "start=<" << start << ">\t" << std::flush;
+      std::cout << "stopped=<" << stopped << ">\t" << std::flush;
+      std::cout << std::endl;
+  }
 
 }
 
-bool data_message(zmq::socket_t * sub, std::vector<uint16_t> * data) {
+bool data_message(zmq::socket_t * sub, long long * timing, std::vector<uint16_t> * data) {
   static std::string stop_trigger("SIG_END_PROGRAM");
   zmq::message_t msg;
   std::string msg_str;
@@ -352,7 +380,7 @@ bool data_message(zmq::socket_t * sub, std::vector<uint16_t> * data) {
     return 1;
   }
   
-  message_decode(msg_str, data);
+  message_decode(msg_str, timing, data);
 
   return 0;
 }
