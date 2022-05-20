@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    std::cout << "Neutral::Begin." << std::endl;
+    std::cout << "Initialising all actuators..." << std::flush;
 
     struct timespec t;
     struct sched_param param;
@@ -41,9 +41,10 @@ int main(int argc, char *argv[])
     }
     
     long ms = 900;
-    std::cout << "Neutral::overruns : " << std::dec << ad.execute_trajectory(values, ms *1000000) << std::endl;
+    ad.execute_trajectory(values, ms *1000000);
+    //std::cout << "Neutral::overruns : " << std::dec << ad.execute_trajectory(values, ms *1000000) << std::endl;
    
-    std::cout << "Neutral::Done." << std::endl;
+    std::cout << "done." << std::endl;
     ad.spi_close();
   
     return 0;

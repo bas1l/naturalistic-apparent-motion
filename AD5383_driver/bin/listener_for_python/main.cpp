@@ -70,7 +70,7 @@ int main() {
 
   keep_running = true;
 
-  std::cout << "[CPP_recv]: Listening..." << std::endl;
+  std::cout << "AD: Listening..." << std::endl;
   do {
     if (read(_timer_fd, &missed, sizeof (missed)) == -1) {
       perror("execute_trajectory/read");
@@ -101,11 +101,10 @@ int main() {
 
   close(_timer_fd);
   
-  std::cout << "[CPP_recv] SIG_END_PROGRAM received: ending... " << std::endl;
-  std::cout << "[CPP_recv]: number of messages received: " << nb_read_counter <<std::endl;
-  std::cout << "[CPP_recv]: number of overruns: " << overruns << std::endl;
-  std::cout << "[CPP_recv]: number of AVG overruns : " << std::dec << 100*overruns/(float)nb_read_counter << "%" << std::endl;
-  std::cout << "[CPP_recv]: Done." << std::endl;
+  std::cout << "AD: Number of <messages received>:" << nb_read_counter <<std::flush;
+  std::cout << "\t<overruns>:" << overruns << std::flush;
+  std::cout << "\t<AVG overruns>:" << std::dec << 100*overruns/(float)nb_read_counter << "%" << std::endl;
+  std::cout << "AD: SIG_END_PROGRAM received: end. " << std::endl;
   
   return 0;
 }
@@ -142,10 +141,10 @@ void message_getValues(std::string msg, long long * timing, std::vector<uint16_t
       set_timing = false;
     }
     else
-      (*data).at(pos++) = std::stoi(msg.substr(start, stopped-start));
+      (*data).at(pos++) = std::stoll(msg.substr(start, stopped-start));
     start = stopped + 1; 
   }
-  (*data).at(pos) = std::stoi(msg.substr(start));
+  (*data).at(pos) = std::stoll(msg.substr(start));
 }
 
 

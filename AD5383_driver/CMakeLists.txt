@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "-O2 -std=c++11 -pthread")
 message("${CMAKE_SYSTEM_NAME}")
 
 
-find_package(Boost 1.74.0 COMPONENTS iostreams system)
+find_package(Boost 1.79.0 COMPONENTS iostreams system)
 #find cppzmq wrapper, installed by make of cppzmq
 find_package(cppzmq)
 

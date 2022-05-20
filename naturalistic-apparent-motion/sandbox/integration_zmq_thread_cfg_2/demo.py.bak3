@@ -63,20 +63,14 @@ def initialise_actuators(socket, aL):
 def initialise_accelerometers(teensy_ser, time_to_stop):
     delim = "," # initializing Delimiter
     delim_CR = "\n" # initializing Delimiter
-
-    mean_d = np.zeros(6)
-    mean_prev = np.zeros(6)
-    var = np.zeros(6)
-
+    idx_z = [3, 6, 9, 12, 15, 18] # initializing Z-values index
+    z_mean = np.zeros(6)
     in_range_noise = np.zeros(6)
-    max_d = np.zeros(6)
-    min_d = np.full(6, 1023)
+    max_z = np.zeros(6)
+    min_z = np.full(6, 1023)
     msgs_str = [""]
     values_str = [""]
-    n = 0
-    x = 0
-    y = 0
-    z = 0
+    nb_msg = 0
 
     while time.process_time()<time_to_stop:
         readedByte = teensy_ser.read(teensy_ser.in_waiting)
@@ -89,43 +83,35 @@ def initialise_accelerometers(teensy_ser, time_to_stop):
             # if the entire message failed to reach the Raspberry PI
             if (len(values_str)<19): continue
             
-            # average norm for the 6 accelerometers
+            # conserve only interesting values (Z axis) 
             for i in range(6):
                 x = int(values_str[i*3+1]) # converting valuable string into numbers
                 y = int(values_str[i*3+2]) # converting valuable string into numbers
                 z = int(values_str[i*3+3]) # converting valuable string into numbers
-                d = [(a)**2 for a in (x, y, z)]
-                d = math.sqrt(sum(d))
-                
-                mean_prev[i] = mean_d[i]
-
-                n = n+1
-                mean_d[i] = mean_d[i] + (d-mean_d[i])/n
-                var[i] = ((n-1)*var[i]+(d-mean_d[i])*(d-mean_prev[i])) /n
-
-                if max_d[i]<d:
-                    max_d[i] = d
-                if min_d[i]>d:
-                    min_d[i] = d
+                dist = [(a)**2 for a in (x, y, z)]
+                dist = math.sqrt(sum(dist))
+                #z = int(values_str[idx_z[i]]) # converting valuable string into numbers
+                nb_msg = nb_msg+1
+                z_mean[i] = z_mean[i] + (z-z_mean[i])/(nb_msg)
+                if max_z[i]<z:
+                    max_z[i] = z
+                if min_z[i]>z:
+                    min_z[i] = z
     
-    in_range_noise = np.maximum(abs(max_d-mean_d), abs(min_d-mean_d))/3
-    print(mean_d)
-    print(in_range_noise)
-    
-    #return mean, in_range_noise
-    return mean_d, var
+    in_range_noise = np.maximum(abs(max_z-z_mean), abs(min_z-z_mean))*5     
+
+    return z_mean, in_range_noise
 
 
 def interpret(teensy_ser, socket, end_working_sec, aL, z_mean, in_range_noise, rec_agreement):
     delim = "," # initializing Delimiter
     delim_CR = "\n" # initializing Delimiter
+    idx_z = [3, 6, 9, 12, 15, 18] # initializing Z-values index
     acc_max = 1023
 
     m = np.zeros(6)
     msgs_str = [""]
     values_str = [""]
-
-    idx_z = [3, 6, 9, 12, 15, 18] # initializing Z-values index
     z_val = 0
     
     instruction = ""
@@ -161,19 +147,14 @@ def interpret(teensy_ser, socket, end_working_sec, aL, z_mean, in_range_noise, r
             # if the entire message failed to reach the Raspberry PI
             if (len(values_str)<19) or values_str[0] == '': 
                 continue
+            
             t = int(values_str[0]) # unit:microsecond
-
-            # average norm for the 6 accelerometers
+            # conserve only interesting values (Z axis) 
             for i in range(6):
-                x = int(values_str[i*3+1]) # converting valuable string into numbers
-                y = int(values_str[i*3+2]) # converting valuable string into numbers
-                z = int(values_str[i*3+3]) # converting valuable string into numbers
-                dist = [(a)**2 for a in (x, y, z)]
-                dist = math.sqrt(sum(dist))
-                
                 # check if it is over the accelerometer noise range
-                if dist>in_range_noise[i]:
-                    m[i] = 8*dist/acc_max # -1 to +1 value (-100% to 100%)
+                z_offset = int(values_str[idx_z[i]])-z_mean[i]
+                if z_offset>in_range_noise[i]:
+                    m[i] = 8*z_offset/acc_max # -1 to +1 value (-100% to 100%)
                 else: # ignore
                     m[i] = 0
             m = aL.define_trajectories(m)

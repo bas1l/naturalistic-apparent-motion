@@ -1,6 +1,6 @@
 {
     "actuline_overview":{
-        "freqRefresh":"2500",
+        "freqRefresh":"2000",
 		"nbActuator":"6"
     },
 	"ad5383":{
